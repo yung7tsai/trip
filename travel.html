@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seoul Trip Schedule</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        /* 韓系配色：奶油白、深灰、霧藍、韓系暖棕 */
+        --bg-color: #f9f9f7;
+        --card-bg: #ffffff;
+        --primary-text: #333333;
+        --secondary-text: #888888;
+        --accent-color: #7b8fa1; /* 霧霾藍 */
+        --highlight-color: #d4a373; /* 拿鐵色 */
+        --border-radius: 20px;
+        --shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Noto Sans KR", "Noto Sans TC", sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--primary-text);
+        max-width: 450px; /* 模擬手機寬度 */
+        margin: 0 auto;
+        min-height: 100vh;
+        position: relative;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Header Area */
+      header {
+        padding: 40px 24px 20px;
+        background: var(--bg-color);
+      }
+
+      .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+
+      .time-display {
+        font-size: 48px;
+        font-weight: 300; /* 韓系喜歡細字體 */
+        color: var(--highlight-color);
+        line-height: 1;
+      }
+
+      .date-display {
+        margin-top: 5px;
+        font-size: 14px;
+        color: var(--secondary-text);
+        letter-spacing: 1px;
+      }
+
+      .location-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .location-title {
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      .weather-card {
+        background: var(--card-bg);
+        padding: 10px 15px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: var(--shadow);
+        border: 1px solid #eee;
+      }
+
+      .weather-icon {
+        font-size: 20px;
+      }
+      .weather-temp {
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      /* Date Selector */
+      .date-tabs {
+        display: flex;
+        gap: 12px;
+        padding: 0 24px;
+        overflow-x: auto;
+        scrollbar-width: none; /* Firefox */
+        margin-bottom: 20px;
+      }
+      .date-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tab {
+        min-width: 60px;
+        height: 70px;
+        background: var(--card-bg);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid transparent;
+        color: var(--secondary-text);
+        transition: all 0.3s ease;
+      }
+
+      .tab.active {
+        background: var(--highlight-color);
+        color: white;
+        box-shadow: 0 4px 10px rgba(212, 163, 115, 0.4);
+      }
+
+      .tab span:first-child {
+        font-size: 11px;
+        margin-bottom: 4px;
+      }
+      .tab span:last-child {
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      /* Timeline Area */
+      .timeline-container {
+        padding: 10px 24px 100px;
+        position: relative;
+      }
+
+      /* 虛線改為實線，更現代 */
+      .timeline-line {
+        position: absolute;
+        left: 45px;
+        top: 20px;
+        bottom: 0;
+        width: 2px;
+        background: #e0e0e0;
+        z-index: 0;
+      }
+
+      .timeline-item {
+        display: flex;
+        margin-bottom: 24px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .time-col {
+        width: 50px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--secondary-text);
+        padding-top: 15px;
+        background: var(--bg-color); /* 蓋住線條 */
+        text-align: left;
+      }
+
+      .card-col {
+        flex: 1;
+        margin-left: 10px;
+      }
+
+      .card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 16px;
+        box-shadow: var(--shadow);
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+
+      .card:active {
+        transform: scale(0.98);
+      }
+
+      .tag {
+        display: inline-block;
+        font-size: 10px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        background: #eff1f3;
+        color: var(--accent-color);
+        margin-bottom: 8px;
+      }
+
+      .tag.food {
+        background: #fff4e6;
+        color: #d4a373;
+      }
+      .tag.shop {
+        background: #e6f4f1;
+        color: #5b9a8b;
+      }
+
+      .card-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .card-desc {
+        font-size: 12px;
+        color: var(--secondary-text);
+      }
+
+      .price-badge {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--primary-text);
+        border: 1px solid #eee;
+        padding: 2px 8px;
+        border-radius: 20px;
+      }
+
+      /* Floating Action Button */
+      .fab {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 56px;
+        height: 56px;
+        background: var(--primary-text);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+      }
+
+      /* Bottom Sheet / Modal (Simplified) */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);
+        display: none;
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(2px);
+      }
+
+      .modal {
+        background: var(--card-bg);
+        width: 85%;
+        max-width: 400px;
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        animation: slideUp 0.3s ease;
+      }
+
+      @keyframes slideUp {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .modal-header {
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .modal-header::after {
+        content: "";
+        display: block;
+        width: 30px;
+        height: 3px;
+        background: var(--highlight-color);
+        margin: 8px auto 0;
+        border-radius: 2px;
+      }
+
+      .input-group {
+        margin-bottom: 16px;
+      }
+
+      .input-group label {
+        display: block;
+        font-size: 12px;
+        color: var(--secondary-text);
+        margin-bottom: 6px;
+      }
+
+      .input-field {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        font-size: 14px;
+        outline: none;
+        background: #fafafa;
+      }
+
+      .input-field:focus {
+        border-color: var(--accent-color);
+        background: #fff;
+      }
+
+      .btn-save {
+        width: 100%;
+        padding: 14px;
+        background: var(--primary-text);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        margin-top: 10px;
+        cursor: pointer;
+      }
+
+      .total-expense {
+        padding: 24px;
+        border-top: 1px solid #eee;
+        background: white;
+        position: fixed;
+        bottom: 0;
+        max-width: 450px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+      }
+
+      .total-expense span {
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--highlight-color);
+      }
+      .currency {
+        font-size: 14px;
+        margin-right: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-top">
+        <div>
+          <div class="time-display">10:30</div>
+          <div class="date-display">2025.10.15 (三)</div>
+          <div class="location-info">
+            <div class="location-title">首爾, 弘大入口</div>
+          </div>
+        </div>
+        <div class="weather-card">
+          <div class="weather-icon">☀️</div>
+          <div class="weather-temp">14°</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="date-tabs">
+      <div class="tab">
+        <span>Day 1</span>
+        <span>10/14</span>
+      </div>
+      <div class="tab active">
+        <span>Day 2</span>
+        <span>10/15</span>
+      </div>
+      <div class="tab">
+        <span>Day 3</span>
+        <span>10/16</span>
+      </div>
+      <div class="tab">
+        <span>Day 4</span>
+        <span>10/17</span>
+      </div>
+      <div class="tab">
+        <span>Day 5</span>
+        <span>10/18</span>
+      </div>
+    </div>
+
+    <div class="timeline-container">
+      <div class="timeline-line"></div>
+
+      <div class="timeline-item">
+        <div class="time-col">09:00</div>
+        <div class="card-col">
+          <div
+            class="card"
+            onclick="openModal('早餐：Egg Drop', '弘大店', 7500)"
+          >
+            <span class="tag food">早餐</span>
+            <div class="price-badge">₩ 7,500</div>
+            <div class="card-title">Egg Drop 三明治</div>
+            <div class="card-desc">弘大店，必點蒜香培根起司</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time-col">10:30</div>
+        <div class="card-col">
+          <div
+            class="card"
+            onclick="openModal('購物：延南洞', '文創小物', 35000)"
+          >
+            <span class="tag shop">購物</span>
+            <div class="price-badge">₩ 35,000</div>
+            <div class="card-title">延南洞文創散步</div>
+            <div class="card-desc">Object, Mazzzzy 選物店</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time-col">12:30</div>
+        <div class="card-col">
+          <div
+            class="card"
+            onclick="openModal('午餐：馬鈴薯排骨湯', '李太祖', 12000)"
+          >
+            <span class="tag food">午餐</span>
+            <div class="price-badge">₩ 12,000</div>
+            <div class="card-title">李太祖馬鈴薯排骨湯</div>
+            <div class="card-desc">一人份解酒湯，肉很嫩</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="time-col">14:30</div>
+        <div class="card-col">
+          <div
+            class="card"
+            onclick="openModal('咖啡廳：Cafe Onion', '安國站', 6500)"
+          >
+            <span class="tag">咖啡廳</span>
+            <div class="price-badge">₩ 6,500</div>
+            <div class="card-title">Cafe Onion 安國店</div>
+            <div class="card-desc">韓屋風格，麵包很有名</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="total-expense">
+      <div style="font-size: 12px; color: #888">TOTAL EXPENSE</div>
+      <div><span class="currency">₩</span><span>61,000</span></div>
+    </div>
+
+    <div class="fab">+</div>
+
+    <div class="modal-overlay" id="editModal" onclick="closeModal(event)">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">編輯行程</div>
+
+        <div class="input-group">
+          <label>分類</label>
+          <select class="input-field">
+            <option>用餐</option>
+            <option>購物</option>
+            <option>景點</option>
+            <option>咖啡廳</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label>標題</label>
+          <input type="text" class="input-field" id="modalTitle" value="" />
+        </div>
+
+        <div class="input-group">
+          <label>金額 (KRW)</label>
+          <input type="number" class="input-field" id="modalPrice" value="" />
+        </div>
+
+        <div class="input-group">
+          <label>備註</label>
+          <textarea class="input-field" rows="3">好吃，下次還要來</textarea>
+        </div>
+
+        <button class="btn-save" onclick="closeModalDirect()">保存變更</button>
+      </div>
+    </div>
+
+    <script>
+      function openModal(title, desc, price) {
+        document.getElementById("modalTitle").value = title;
+        document.getElementById("modalPrice").value = price;
+        document.getElementById("editModal").style.display = "flex";
+      }
+
+      function closeModal(event) {
+        if (event.target.id === "editModal") {
+          document.getElementById("editModal").style.display = "none";
+        }
+      }
+
+      function closeModalDirect() {
+        document.getElementById("editModal").style.display = "none";
+      }
+    </script>
+  </body>
+</html>

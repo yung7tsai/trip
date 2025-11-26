@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seoul Trip 2025</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-color: #f7f7f5; /* 韓系米灰背景 */
+        --card-bg: #ffffff;
+        --primary-text: #2c2c2c;
+        --secondary-text: #8e8e8e;
+        --accent-color: #6c7a89; /* 質感霧灰藍 */
+        --highlight-color: #d4a373; /* 拿鐵色 */
+        --danger-color: #e76f51;
+        --border-radius: 16px;
+        --shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Noto Sans KR", "Noto Sans TC", sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--primary-text);
+        max-width: 480px;
+        margin: 0 auto;
+        min-height: 100vh;
+        position: relative;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+        padding-bottom: 80px;
+      }
+
+      /* --- Header --- */
+      header {
+        padding: 40px 24px 10px;
+        background: var(--bg-color);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .header-info h1 {
+        font-size: 28px;
+        font-weight: 300;
+        margin-bottom: 5px;
+        color: var(--primary-text);
+      }
+      .header-info p {
+        font-size: 14px;
+        color: var(--secondary-text);
+        letter-spacing: 1px;
+      }
+
+      /* --- Date Selector --- */
+      .date-scroll-container {
+        display: flex;
+        gap: 12px;
+        padding: 15px 24px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        background: var(--bg-color);
+      }
+      .date-scroll-container::-webkit-scrollbar {
+        display: none;
+      }
+
+      .date-tab {
+        min-width: 60px;
+        height: 72px;
+        background: var(--card-bg);
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--secondary-text);
+        transition: 0.3s;
+        cursor: pointer;
+        border: 1px solid transparent;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        flex-shrink: 0;
+      }
+      .date-tab.active {
+        background: var(--primary-text);
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(44, 44, 44, 0.3);
+      }
+      .date-tab span:first-child {
+        font-size: 11px;
+        margin-bottom: 4px;
+        opacity: 0.8;
+      }
+      .date-tab span:last-child {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      /* --- Timeline --- */
+      .timeline-container {
+        padding: 10px 24px;
+        position: relative;
+        min-height: 300px;
+      }
+      .timeline-line {
+        position: absolute;
+        left: 48px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: #e0e0e0;
+        z-index: 0;
+      }
+
+      .timeline-item {
+        display: flex;
+        margin-bottom: 24px;
+        position: relative;
+        z-index: 1;
+        animation: fadeIn 0.4s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .time-col {
+        width: 55px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--secondary-text);
+        padding-top: 18px;
+        text-align: left;
+        background: var(--bg-color);
+      }
+
+      .card-col {
+        flex: 1;
+        margin-left: 12px;
+      }
+
+      .card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 18px;
+        box-shadow: var(--shadow);
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.1s;
+        border: 1px solid #f0f0f0;
+      }
+      .card:active {
+        transform: scale(0.98);
+      }
+
+      .chip-container {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .chip {
+        font-size: 10px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+      }
+      .chip.flight {
+        background: #e3f2fd;
+        color: #1e88e5;
+      }
+      .chip.beauty {
+        background: #fce4ec;
+        color: #d81b60;
+      }
+      .chip.food {
+        background: #fff3e0;
+        color: #fb8c00;
+      }
+      .chip.shop {
+        background: #e8f5e9;
+        color: #43a047;
+      }
+      .chip.transport {
+        background: #eceff1;
+        color: #546e7a;
+      }
+
+      .card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--primary-text);
+        margin-bottom: 4px;
+      }
+      .card-desc {
+        font-size: 13px;
+        color: var(--secondary-text);
+        line-height: 1.4;
+      }
+
+      .price-tag {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--primary-text);
+        background: #f5f5f5;
+        padding: 4px 10px;
+        border-radius: 8px;
+      }
+
+      /* --- Footer & FAB --- */
+      .bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 16px 24px;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 480px;
+        margin: 0 auto;
+        z-index: 100;
+      }
+      .total-label {
+        font-size: 11px;
+        color: var(--secondary-text);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .total-amount {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--primary-text);
+      }
+
+      .fab {
+        width: 48px;
+        height: 48px;
+        background: var(--primary-text);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+      }
+
+      /* --- Modal --- */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 200;
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .modal-overlay.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: #fff;
+        width: 100%;
+        max-width: 480px;
+        border-radius: 24px 24px 0 0;
+        padding: 24px;
+        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(100%);
+        }
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .modal-title {
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .btn-close {
+        border: none;
+        background: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #999;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-label {
+        display: block;
+        font-size: 12px;
+        color: var(--secondary-text);
+        margin-bottom: 8px;
+        font-weight: 500;
+      }
+      .form-input,
+      .form-select {
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid #e0e0e0;
+        background: #fafafa;
+        font-size: 15px;
+        outline: none;
+        transition: 0.2s;
+      }
+      .form-input:focus {
+        border-color: var(--accent-color);
+        background: #fff;
+      }
+
+      .btn-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+      }
+      .btn {
+        flex: 1;
+        padding: 15px;
+        border-radius: 12px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        font-size: 15px;
+      }
+      .btn-primary {
+        background: var(--primary-text);
+        color: white;
+      }
+      .btn-danger {
+        background: #fff0f0;
+        color: var(--danger-color);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px 0;
+        color: #bbb;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-info">
+        <h1>SEOUL 2025</h1>
+        <p>1月6日 - 1月12日 • 首爾自由行</p>
+      </div>
+    </header>
+
+    <div class="date-scroll-container" id="dateTabs"></div>
+
+    <div class="timeline-container" id="timelineList"></div>
+
+    <div class="bottom-bar">
+      <div>
+        <div class="total-label">Day Total</div>
+        <div class="total-amount" id="dayTotal">₩ 0</div>
+      </div>
+      <div class="fab" onclick="openModal()">+</div>
+    </div>
+
+    <div
+      class="modal-overlay"
+      id="editModal"
+      onclick="if(event.target === this) closeModal()"
+    >
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title" id="modalTitle">新增行程</div>
+          <button class="btn-close" onclick="closeModal()">×</button>
+        </div>
+
+        <input type="hidden" id="itemId" />
+
+        <div class="form-group">
+          <label class="form-label">時間</label>
+          <input type="time" class="form-input" id="inputTime" value="12:00" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">分類</label>
+          <select class="form-select" id="inputCategory">
+            <option value="flight">✈️ 交通/飛行</option>
+            <option value="beauty">💇🏻‍♀️ 美容/造型</option>
+            <option value="food">🍽️ 用餐/咖啡</option>
+            <option value="shop">🛍️ 購物/逛街</option>
+            <option value="transport">🚇 交通/地鐵</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">標題</label>
+          <input
+            type="text"
+            class="form-input"
+            id="inputTitle"
+            placeholder="例如：明洞換錢"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">備註</label>
+          <input
+            type="text"
+            class="form-input"
+            id="inputMemo"
+            placeholder="地點細節或備忘錄"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">金額 (KRW)</label>
+          <input
+            type="number"
+            class="form-input"
+            id="inputPrice"
+            placeholder="0"
+          />
+        </div>
+
+        <div class="btn-row">
+          <button
+            class="btn btn-danger"
+            id="btnDelete"
+            style="display: none"
+            onclick="deleteItem()"
+          >
+            刪除
+          </button>
+          <button class="btn btn-primary" onclick="saveItem()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- 1. 初始化數據 (1/6 - 1/12) ---
+      const startDate = new Date(2025, 0, 6); // 1月6日
+      const endDate = new Date(2025, 0, 12); // 1月12日
+      let currentDateStr = "1/6"; // 預設選中
+
+      // 預設行程資料
+      const defaultData = [
+        {
+          id: 1,
+          date: "1/6",
+          time: "08:00",
+          title: "桃園機場出發",
+          category: "flight",
+          price: 0,
+          memo: "提早2小時抵達機場",
+        },
+        {
+          id: 2,
+          date: "1/6",
+          time: "11:30",
+          title: "抵達仁川機場",
+          category: "flight",
+          price: 0,
+          memo: "搭乘 AREX 直達車",
+        },
+        {
+          id: 3,
+          date: "1/7",
+          time: "10:00",
+          title: "明洞換錢所",
+          category: "shop",
+          price: 0,
+          memo: "大使館換錢所匯率較好",
+        },
+        {
+          id: 4,
+          date: "1/7",
+          time: "11:30",
+          title: "早午餐：明洞餃子",
+          category: "food",
+          price: 11000,
+          memo: "必點刀削麵",
+        },
+        {
+          id: 5,
+          date: "1/7",
+          time: "13:00",
+          title: "刺青預約",
+          category: "beauty",
+          price: 150000,
+          memo: "弘大/明洞工作室",
+        },
+        {
+          id: 6,
+          date: "1/7",
+          time: "16:00",
+          title: "髮廊造型",
+          category: "beauty",
+          price: 80000,
+          memo: "剪髮 + 護髮",
+        },
+        {
+          id: 7,
+          date: "1/12",
+          time: "09:00",
+          title: "退房前往機場",
+          category: "transport",
+          price: 15000,
+          memo: "機場巴士",
+        },
+        {
+          id: 8,
+          date: "1/12",
+          time: "12:00",
+          title: "仁川機場回程",
+          category: "flight",
+          price: 0,
+          memo: "免稅店最後衝刺",
+        },
+      ];
+
+      // 從 LocalStorage 讀取或使用預設值
+      let itineraryData =
+        JSON.parse(localStorage.getItem("seoulTripData")) || defaultData;
+
+      // --- 2. 核心邏輯 ---
+
+      function init() {
+        renderDateTabs();
+        renderTimeline(currentDateStr);
+      }
+
+      function saveDataToLocal() {
+        localStorage.setItem("seoulTripData", JSON.stringify(itineraryData));
+      }
+
+      // 渲染日期分頁
+      function renderDateTabs() {
+        const container = document.getElementById("dateTabs");
+        container.innerHTML = "";
+
+        let tempDate = new Date(startDate);
+        while (tempDate <= endDate) {
+          const m = tempDate.getMonth() + 1;
+          const d = tempDate.getDate();
+          const dateStr = `${m}/${d}`;
+          const dayName = tempDate.toLocaleDateString("en-US", {
+            weekday: "short",
+          }); // Mon, Tue...
+
+          const div = document.createElement("div");
+          div.className = `date-tab ${
+            dateStr === currentDateStr ? "active" : ""
+          }`;
+          div.innerHTML = `<span>Day ${d - 5}</span><span>${d}</span>`; // 簡單計算 Day 1, 2
+          div.onclick = () => {
+            currentDateStr = dateStr;
+            renderDateTabs(); // 重繪 active 狀態
+            renderTimeline(dateStr);
+          };
+          container.appendChild(div);
+
+          tempDate.setDate(tempDate.getDate() + 1);
+        }
+      }
+
+      // 渲染時間軸列表
+      function renderTimeline(date) {
+        const list = document.getElementById("timelineList");
+        list.innerHTML = '<div class="timeline-line"></div>';
+
+        // 過濾並排序
+        const dayItems = itineraryData
+          .filter((item) => item.date === date)
+          .sort((a, b) => a.time.localeCompare(b.time));
+
+        let daySum = 0;
+
+        if (dayItems.length === 0) {
+          list.innerHTML += `<div class="empty-state">點擊右下角 + 新增行程</div>`;
+        } else {
+          dayItems.forEach((item) => {
+            daySum += parseInt(item.price || 0);
+            const el = document.createElement("div");
+            el.className = "timeline-item";
+            el.innerHTML = `
+                        <div class="time-col">${item.time}</div>
+                        <div class="card-col">
+                            <div class="card" onclick="editItem(${item.id})">
+                                <span class="price-tag">₩ ${parseInt(
+                                  item.price
+                                ).toLocaleString()}</span>
+                                <div class="chip-container">
+                                    <span class="chip ${
+                                      item.category
+                                    }">${getCategoryName(item.category)}</span>
+                                </div>
+                                <div class="card-title">${item.title}</div>
+                                <div class="card-desc">${item.memo}</div>
+                            </div>
+                        </div>
+                    `;
+            list.appendChild(el);
+          });
+        }
+
+        document.getElementById(
+          "dayTotal"
+        ).innerText = `₩ ${daySum.toLocaleString()}`;
+      }
+
+      function getCategoryName(cat) {
+        const map = {
+          flight: "交通",
+          beauty: "美容",
+          food: "用餐",
+          shop: "購物",
+          transport: "交通",
+        };
+        return map[cat] || "其他";
+      }
+
+      // --- 3. Modal 操作 (新增/編輯/刪除) ---
+
+      function openModal(isEdit = false) {
+        const modal = document.getElementById("editModal");
+        modal.classList.add("active");
+
+        if (!isEdit) {
+          // 重置表單為新增狀態
+          document.getElementById("modalTitle").innerText = "新增行程";
+          document.getElementById("itemId").value = "";
+          document.getElementById("inputTime").value = "12:00";
+          document.getElementById("inputTitle").value = "";
+          document.getElementById("inputMemo").value = "";
+          document.getElementById("inputPrice").value = "";
+          document.getElementById("btnDelete").style.display = "none";
+        }
+      }
+
+      function editItem(id) {
+        const item = itineraryData.find((i) => i.id === id);
+        if (!item) return;
+
+        openModal(true);
+        document.getElementById("modalTitle").innerText = "編輯行程";
+        document.getElementById("itemId").value = item.id;
+        document.getElementById("inputTime").value = item.time;
+        document.getElementById("inputCategory").value = item.category;
+        document.getElementById("inputTitle").value = item.title;
+        document.getElementById("inputMemo").value = item.memo;
+        document.getElementById("inputPrice").value = item.price;
+        document.getElementById("btnDelete").style.display = "block";
+      }
+
+      function closeModal() {
+        document.getElementById("editModal").classList.remove("active");
+      }
+
+      function saveItem() {
+        const id = document.getElementById("itemId").value;
+        const title = document.getElementById("inputTitle").value;
+        if (!title) return alert("請輸入標題");
+
+        const newItem = {
+          id: id ? parseInt(id) : Date.now(),
+          date: currentDateStr,
+          time: document.getElementById("inputTime").value,
+          category: document.getElementById("inputCategory").value,
+          title: title,
+          memo: document.getElementById("inputMemo").value,
+          price: document.getElementById("inputPrice").value || 0,
+        };
+
+        if (id) {
+          // 更新舊資料
+          const index = itineraryData.findIndex((i) => i.id == id);
+          itineraryData[index] = newItem;
+        } else {
+          // 新增資料
+          itineraryData.push(newItem);
+        }
+
+        saveDataToLocal();
+        closeModal();
+        renderTimeline(currentDateStr);
+      }
+
+      function deleteItem() {
+        const id = document.getElementById("itemId").value;
+        if (confirm("確定要刪除這個行程嗎？")) {
+          itineraryData = itineraryData.filter((i) => i.id != id);
+          saveDataToLocal();
+          closeModal();
+          renderTimeline(currentDateStr);
+        }
+      }
+
+      // 啟動
+      init();
+    </script>
+  </body>
+</html>
