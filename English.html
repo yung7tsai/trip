@@ -779,14 +779,14 @@
       <div class="modal-box">
         <div class="modal-header">
           <div class="modal-title">行程編輯</div>
-          <button class="btn-delete" onclick="deleteItem()">🗑 刪除</button>
+          <button class="btn-delete" onclick="deleteItem()">🗑 Delete</button>
         </div>
 
         <input type="hidden" id="itemId" />
 
         <div class="input-row" style="display: flex; gap: 12px">
           <div class="input-group" style="flex: 0 0 35%; min-width: 0">
-            <label>時間</label>
+            <label>Time</label>
             <input
               type="time"
               class="modal-input"
@@ -796,7 +796,7 @@
           </div>
 
           <div class="input-group" style="flex: 1; min-width: 0">
-            <label>分類</label>
+            <label>Category</label>
             <select class="modal-select" id="inputCategory">
               <option value="交通">交通</option>
               <option value="午餐">午餐</option>
@@ -804,47 +804,47 @@
               <option value="購物逛街">購物逛街</option>
               <option value="景點">景點</option>
               <option value="彈性">彈性</option>
-              <option value="有預約的行程">有預約的行程</option>
+              <option value="有預約的行程">Reserved</option>
             </select>
           </div>
         </div>
 
         <div class="input-group">
-          <label>標題</label>
+          <label>Title</label>
           <input
             type="text"
             class="modal-input"
             id="inputTitle"
-            placeholder="例：明洞換錢"
+            placeholder="e.g. 換錢"
           />
         </div>
 
         <div class="input-group">
-          <label>地圖連結 (URL)</label>
+          <label>Map Link (URL)</label>
           <input
             type="text"
             class="modal-input"
             id="inputMap"
-            placeholder="Naver Map 連結"
+            placeholder="Naver Map Link"
           />
         </div>
 
         <div class="input-group">
-          <label>備註</label>
+          <label>NOTE</label>
           <textarea
             class="modal-textarea"
             id="inputMemo"
-            placeholder="詳細資訊..."
+            placeholder="Details..."
           ></textarea>
         </div>
 
         <div class="input-group">
-          <label>圖片 (點擊上傳)</label>
+          <label>Image (Click to Upload)</label>
           <div
             class="file-upload-wrapper"
             onclick="document.getElementById('inputImage').click()"
           >
-            <span style="font-size: 12px; color: #888">選擇圖片</span>
+            <span style="font-size: 12px; color: #888">Choose Image</span>
             <input
               type="file"
               id="inputImage"
