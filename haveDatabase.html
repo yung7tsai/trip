@@ -617,33 +617,6 @@
         color: #1f3a52;
         font-size: 22px;
       }
-
-      /* --- 編輯順序模式樣式 --- */
-      .sorting-mode .card {
-        border-left: 4px solid #e74c3c; /* 左邊變紅色提示 */
-        background-color: #fffdfd;
-        animation: shake 0.3s; /* 輕微抖動提示 */
-      }
-      /* 讓按鈕變色的樣式 */
-      .btn-sorting-active {
-        background-color: #8aa6bf !important;
-        color: white !important;
-      }
-
-      @keyframes shake {
-        0% {
-          transform: translateX(0);
-        }
-        25% {
-          transform: translateX(-2px);
-        }
-        50% {
-          transform: translateX(2px);
-        }
-        100% {
-          transform: translateX(0);
-        }
-      }
     </style>
   </head>
   <body>
@@ -684,29 +657,17 @@
 
     <div class="timeline-container">
       <div
-        style="display: flex; justify-content: flex-end; margin-bottom: 15px"
+        style="
+          text-align: right;
+          font-size: 12px;
+          color: var(--text-accent);
+          margin-bottom: 20px;
+          font-style: italic;
+          font-weight: 500;
+        "
       >
-        <button
-          id="sortBtn"
-          onclick="toggleSortMode()"
-          style="
-            background: none;
-            border: 1px solid #8aa6bf;
-            color: #8aa6bf;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            transition: 0.2s;
-          "
-        >
-          <span>⇄</span> 編輯順序
-        </button>
+        ✦ 長按卡片可拖曳排序
       </div>
-
       <div id="sortableList"></div>
     </div>
 
@@ -1142,11 +1103,9 @@
         const id = document.getElementById("itemId").value;
         const fileInput = document.getElementById("inputImage");
 
-        // 1. 準備舊資料
         let currentExpenses = [];
-        let currentImage = "";
-        // 確保 ID 是字串
         let docId = id ? id.toString() : Date.now().toString();
+        let currentImage = "";
 
         if (id) {
           const existingItem = itinerary.find((i) => i.id == id);
@@ -1157,7 +1116,6 @@
         }
 
         const performSave = (base64Image) => {
-          // 2. 準備要儲存的這個行程物件
           const itemData = {
             id: parseInt(docId),
             date: currentDate,
@@ -1170,47 +1128,20 @@
             expenses: currentExpenses,
           };
 
-          // 3. 關鍵修改：自動依照時間排序並更新所有行程
-          // 先取得當天「除了這個行程以外」的所有行程
-          let dayItems = itinerary.filter(
-            (i) => i.date === currentDate && i.id != docId
-          );
-
-          // 把這個行程加進去
-          dayItems.push(itemData);
-
-          // 依照時間排序
-          dayItems.sort((a, b) => a.time.localeCompare(b.time));
-
-          // 4. 使用 Batch (批次寫入) 一次更新當天所有行程的順序
-          const batch = db.batch();
-
-          dayItems.forEach((item, index) => {
-            // 設定新的順序 (sortIndex)
-            const ref = tripCollection.doc(item.id.toString());
-            // 這裡我們只更新 sortIndex 和該行程的資料
-            // 為了保險，如果是當下編輯的物件，寫入完整資料；如果是其他物件，只更新順序
-            if (item.id == docId) {
-              batch.set(ref, { ...item, sortIndex: index }, { merge: true });
-            } else {
-              batch.update(ref, { sortIndex: index });
-            }
-          });
-
-          // 5. 送出更新
-          batch
-            .commit()
+          // 寫入 Firebase
+          tripCollection
+            .doc(docId)
+            .set(itemData, { merge: true })
             .then(() => {
-              console.log("儲存並排序成功");
+              console.log("儲存成功");
               closeModal();
             })
             .catch((error) => {
-              console.error("儲存失敗", error);
-              alert("儲存失敗 (可能是圖片太大，限制 1MB)");
+              alert("儲存失敗！可能圖片太大 (免費版限制 1MB)");
+              console.error(error);
             });
         };
 
-        // 處理圖片讀取
         if (fileInput.files && fileInput.files[0]) {
           const reader = new FileReader();
           reader.onload = function (e) {
@@ -1337,51 +1268,37 @@
       renderTabs();
 
       // 拖曳套件設定 (加入 onEnd 儲存功能)
-      // --- 拖曳排序功能 (包含開關與儲存) ---
-      let sortable = new Sortable(document.getElementById("sortableList"), {
+      new Sortable(document.getElementById("sortableList"), {
         animation: 150,
         handle: ".card",
-        disabled: true, // 預設：禁止拖曳
         onEnd: function (evt) {
-          // 拖曳結束：儲存新順序
+          // 1. 取得拖曳後的新順序
           const itemEls = document.querySelectorAll(".timeline-item");
-          const batch = db.batch(); // 使用 Batch 一次寫入，節省效能
+
+          // 2. 批次更新資料庫
+          const batch = db.batch(); // 使用 Batch 寫入效能較好
 
           itemEls.forEach((el, index) => {
             const id = el.dataset.id;
-            // 找出對應的 item 並更新本地資料 (讓畫面不會跳掉)
+            const docRef = tripCollection.doc(id.toString());
+
+            // 更新本地資料 (讓畫面暫時正確)
             const item = itinerary.find((i) => i.id == id);
             if (item) item.sortIndex = index;
 
             // 準備寫入資料庫
-            const docRef = tripCollection.doc(id.toString());
             batch.update(docRef, { sortIndex: index });
           });
 
-          batch.commit().then(() => console.log("順序已更新"));
+          // 3. 送出更新
+          batch
+            .commit()
+            .then(() => {
+              console.log("順序已更新");
+            })
+            .catch((err) => console.error("排序儲存失敗", err));
         },
       });
-
-      function toggleSortMode() {
-        // 取得目前狀態
-        const isDisabled = sortable.option("disabled");
-        const btn = document.getElementById("sortBtn");
-        const list = document.getElementById("sortableList");
-
-        if (isDisabled) {
-          // 開啟編輯模式
-          sortable.option("disabled", false);
-          btn.innerHTML = "<span>✓</span> 完成";
-          btn.classList.add("btn-sorting-active");
-          list.classList.add("sorting-mode");
-        } else {
-          // 關閉編輯模式 (儲存)
-          sortable.option("disabled", true);
-          btn.innerHTML = "<span>⇄</span> 調整順序";
-          btn.classList.remove("btn-sorting-active");
-          list.classList.remove("sorting-mode");
-        }
-      }
     </script>
   </body>
 </html>
