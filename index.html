@@ -12,6 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Serif+KR:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap"
       rel="stylesheet"
     />
+
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
@@ -49,7 +50,7 @@
       /* --- Header --- */
       header {
         position: relative;
-        min-height: 300px;
+        min-height: 200px;
         background-image: url("https://images.unsplash.com/photo-1598983870677-01e226156732?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80");
         background-size: cover;
         background-position: top center;
@@ -85,7 +86,7 @@
       }
 
       .header-content-wrapper {
-        padding-top: 80px; /* 這裡改小，內容就會往上移 */
+        padding-top: 50px; /* 這裡改小，內容就會往上移 */
         margin-bottom: 20px;
       }
 
@@ -104,7 +105,9 @@
         line-height: 1;
         color: var(--text-primary);
         margin-bottom: 15px;
-        font-weight: 500;
+
+        font-weight: 550;
+
         text-shadow: 0 10px 30px rgba(248, 250, 251, 0.8);
       }
 
@@ -434,6 +437,7 @@
       .input-group {
         margin-bottom: 8px;
         flex: 1;
+        min-width: 0; /* 關鍵：防止內容撐開導致重疊 */
       }
       .input-group label {
         display: block;
@@ -714,7 +718,7 @@
         <input type="hidden" id="itemId" />
 
         <div class="input-row">
-          <div class="input-group" style="flex: 0.6">
+          <div class="input-group" style="flex: 1">
             <label>時間</label>
             <input type="time" class="modal-input" id="inputTime" />
           </div>
