@@ -12,8 +12,6 @@
       href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Serif+KR:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap"
       rel="stylesheet"
     />
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
@@ -783,81 +781,23 @@
       </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
     <script>
-      // ---------------------------------------------------------
-      // 1. Firebase 設定 (請把這裡換成你剛剛在 Firebase 網頁複製的內容)
-      // ---------------------------------------------------------
-      const firebaseConfig = {
-        apiKey: "AIzaSyDrZKuMRj9Cp5hzmmujEfgVR5C0HGskaBA",
-        authDomain: "seoul-travel-planning.firebaseapp.com",
-        projectId: "seoul-travel-planning",
-        storageBucket: "seoul-travel-planning.firebasestorage.app",
-        messagingSenderId: "4137993578",
-        appId: "1:4137993578:web:7032ec9e16d70058645113",
-        measurementId: "G-SW5PPNY2T3",
-      };
-
-      // 初始化 Firebase
-      firebase.initializeApp(firebaseConfig);
-      const db = firebase.firestore();
-      const tripCollection = db.collection("seoul_itinerary_2026");
-
-      // ---------------------------------------------------------
-      // 2. 全域變數
-      // ---------------------------------------------------------
-      let itinerary = [];
+      // --- 全域與 GPS ---
       let currentLat = 37.5665;
       let currentLon = 126.978;
-      let currentDate = "1/6";
 
-      const dates = [
-        { d: "1/6", w: "Day 1" },
-        { d: "1/7", w: "Day 2" },
-        { d: "1/8", w: "Day 3" },
-        { d: "1/9", w: "Day 4" },
-        { d: "1/10", w: "Day 5" },
-        { d: "1/11", w: "Day 6" },
-        { d: "1/12", w: "Day 7" },
-      ];
-
-      // ---------------------------------------------------------
-      // 3. 核心：監聽資料庫 (自動同步)
-      // ---------------------------------------------------------
-      tripCollection.onSnapshot(
-        (snapshot) => {
-          itinerary = [];
-          snapshot.forEach((doc) => {
-            itinerary.push(doc.data());
-          });
-
-          // 資料庫一變動，畫面自動更新
-          renderList();
-          updateTotalAmount();
-        },
-        (error) => {
-          console.error("資料庫連線失敗:", error);
-          alert(
-            "連線失敗！請檢查 config 是否填寫正確，並確認 Firestore 規則是否為 Test Mode"
-          );
-        }
-      );
-
-      // ---------------------------------------------------------
-      // 4. 基本功能 (GPS, Weather, Time)
-      // ---------------------------------------------------------
       function initLocation() {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              currentLat = pos.coords.latitude;
-              currentLon = pos.coords.longitude;
+            (position) => {
+              currentLat = position.coords.latitude;
+              currentLon = position.coords.longitude;
               fetchCityName(currentLat, currentLon);
               fetchWeather(currentLat, currentLon);
             },
-            (err) => {
+            (error) => {
+              document.getElementById("locationText").innerText =
+                "首爾 (Default)";
               fetchWeather(currentLat, currentLon);
             }
           );
@@ -872,8 +812,12 @@
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=zh-TW`
           );
           const data = await res.json();
-          document.getElementById("locationText").innerText =
-            data.address.city || data.address.town || "目前位置";
+          let name =
+            data.address.city ||
+            data.address.town ||
+            data.address.county ||
+            "目前位置";
+          document.getElementById("locationText").innerText = name;
         } catch (e) {
           document.getElementById("locationText").innerText = "目前位置";
         }
@@ -885,12 +829,22 @@
             `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
           );
           const data = await res.json();
-          document.getElementById("weatherTemp").innerText = `${Math.round(
-            data.current_weather.temperature
-          )}°C`;
+          const temp = Math.round(data.current_weather.temperature);
+          const code = data.current_weather.weathercode;
+          document.getElementById("weatherTemp").innerText = `${temp}°C`;
+          let icon = "☀️";
+          if (code > 2) icon = "⛅";
+          if (code > 45) icon = "☁️";
+          if (code > 50) icon = "🌧️";
+          if (code > 70) icon = "❄️";
+          document.getElementById("weatherIcon").innerText = icon;
         } catch (e) {}
       }
 
+      initLocation();
+      setInterval(() => fetchWeather(currentLat, currentLon), 600000);
+
+      // --- 時間 ---
       function updateTime() {
         const now = new Date();
         document.getElementById("clock").innerText = `${String(
@@ -899,26 +853,67 @@
         const dateStr = `${now.getFullYear()}.${String(
           now.getMonth() + 1
         ).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
+        const dayStr = now.toLocaleDateString("en-US", { weekday: "short" });
         document.getElementById(
           "currentDate"
-        ).innerText = `${dateStr} (${now.toLocaleDateString("en-US", {
-          weekday: "short",
-        })})`;
+        ).innerText = `${dateStr} (${dayStr})`;
       }
+      setInterval(updateTime, 1000);
+      updateTime();
 
-      // ---------------------------------------------------------
-      // 5. 畫面渲染邏輯
-      // ---------------------------------------------------------
+      // --- 資料管理 (更新版：自動遷移舊資料) ---
+      const defaultData = [
+        {
+          id: 1,
+          date: "1/6",
+          time: "18:15",
+          title: "TPE 🛫 ICN",
+          category: "交通",
+          memo: "酷航 TR 896",
+          expenses: [],
+          mapUrl: "",
+          image: "",
+        },
+      ];
+
+      // --- 貼上這段新的，包含資料轉換邏輯 ---
+      let rawData =
+        JSON.parse(localStorage.getItem("seoul2026_text_v1")) || defaultData;
+
+      // 自動轉換：如果你之前有存過單一 price，這裡會幫你轉成 expenses 陣列
+      let itinerary = rawData.map((item) => {
+        if (!item.expenses) {
+          // 如果舊資料有 price 且大於 0，轉為一筆「費用」
+          if (item.price && item.price > 0) {
+            item.expenses = [{ name: "費用", amount: parseInt(item.price) }];
+          } else {
+            item.expenses = [];
+          }
+        }
+        return item;
+      });
+
+      const dates = [
+        { d: "1/6", w: "Day 1" },
+        { d: "1/7", w: "Day 2" },
+        { d: "1/8", w: "Day 3" },
+        { d: "1/9", w: "Day 4" },
+        { d: "1/10", w: "Day 5" },
+        { d: "1/11", w: "Day 6" },
+        { d: "1/12", w: "Day 7" },
+      ];
+      let currentDate = "1/6";
+
       function renderTabs() {
         document.getElementById("dateTabs").innerHTML = dates
           .map(
             (d) => `
-            <div class="tab ${
-              d.d === currentDate ? "active" : ""
-            }" onclick="switchDate('${d.d}')">
-                <span>${d.w}</span><span>${d.d}</span>
-            </div>
-        `
+                <div class="tab ${
+                  d.d === currentDate ? "active" : ""
+                }" onclick="switchDate('${d.d}')">
+                    <span>${d.w}</span><span>${d.d}</span>
+                </div>
+            `
           )
           .join("");
       }
@@ -928,18 +923,28 @@
         list.innerHTML = "";
         const items = itinerary.filter((i) => i.date === currentDate);
 
-        // 排序 (選用)：如果要按時間排序，可以把下面這行註解打開
-        // items.sort((a, b) => a.time.localeCompare(b.time));
+        // 計算全天總金額 (累加所有明細)
+        let grandTotal = 0;
+        itinerary.forEach((i) => {
+          if (i.expenses)
+            grandTotal += i.expenses.reduce(
+              (sum, e) => sum + parseInt(e.amount),
+              0
+            );
+        });
+        document.getElementById(
+          "totalPrice"
+        ).innerText = `₩ ${grandTotal.toLocaleString()}`;
 
         if (items.length === 0)
           list.innerHTML = `<div style="text-align:center; padding:50px; color:#aaa; font-size:14px;">點擊右下角 + 新增行程</div>`;
 
         items.forEach((item) => {
-          // 計算單項總額
-          const itemTotal = item.expenses
-            ? item.expenses.reduce((sum, e) => sum + parseInt(e.amount), 0)
-            : 0;
-          const priceText = `₩ ${itemTotal.toLocaleString()}`;
+          // 計算該單一行程的總金額
+          const itemTotal = item.expenses.reduce(
+            (sum, e) => sum + parseInt(e.amount),
+            0
+          );
 
           const el = document.createElement("div");
           el.className = "timeline-item";
@@ -949,6 +954,7 @@
             ? `<img src="${item.image}" class="card-image" style="display:block;">`
             : "";
 
+          // 地圖連結邏輯
           let mapLinkHtml = "";
           if (item.mapUrl) {
             let finalUrl = item.mapUrl;
@@ -961,6 +967,8 @@
             }</a></div>`;
           }
 
+          const priceText = `₩ ${itemTotal.toLocaleString()}`;
+
           el.innerHTML = `
             <div class="card" onclick="editItem(${item.id})">
                 <div class="card-top-row">
@@ -970,28 +978,15 @@
                       item.id
                     }, event)">${priceText}</span>
                 </div>
+                
                 <div class="card-title">${item.title}</div>
                 ${imgHtml}
                 <div class="card-detail">${item.memo}</div>
                 ${mapLinkHtml}
             </div>
-          `;
+        `;
           list.appendChild(el);
         });
-      }
-
-      function updateTotalAmount() {
-        let grandTotal = 0;
-        itinerary.forEach((i) => {
-          if (i.expenses)
-            grandTotal += i.expenses.reduce(
-              (sum, e) => sum + parseInt(e.amount),
-              0
-            );
-        });
-        document.getElementById(
-          "totalPrice"
-        ).innerText = `₩ ${grandTotal.toLocaleString()}`;
       }
 
       function switchDate(d) {
@@ -999,21 +994,25 @@
         renderTabs();
         renderList();
       }
+      new Sortable(document.getElementById("sortableList"), {
+        animation: 150,
+        handle: ".card",
+      });
 
+      // --- 圖片預覽 ---
       function previewImage(input) {
         if (input.files && input.files[0]) {
           const reader = new FileReader();
           reader.onload = function (e) {
-            document.getElementById("imgPreview").src = e.target.result;
-            document.getElementById("imgPreview").style.display = "block";
+            const img = document.getElementById("imgPreview");
+            img.src = e.target.result;
+            img.style.display = "block";
           };
           reader.readAsDataURL(input.files[0]);
         }
       }
 
-      // ---------------------------------------------------------
-      // 6. Modal 與 資料操作 (CRUD)
-      // ---------------------------------------------------------
+      // --- CRUD ---
       function openModal(isEdit = false) {
         document.getElementById("editModal").style.display = "flex";
         if (!isEdit) {
@@ -1022,9 +1021,11 @@
           document.getElementById("inputCategory").value = "交通";
           document.getElementById("inputTitle").value = "";
           document.getElementById("inputMemo").value = "";
+          document.getElementById("inputPrice").value = "";
           document.getElementById("inputMap").value = "";
           document.getElementById("inputImage").value = "";
           document.getElementById("imgPreview").style.display = "none";
+          document.getElementById("imgPreview").src = "";
         }
       }
       function closeModal() {
@@ -1041,6 +1042,7 @@
           item.category || "交通";
         document.getElementById("inputTitle").value = item.title;
         document.getElementById("inputMemo").value = item.memo;
+        document.getElementById("inputPrice").value = item.price;
         document.getElementById("inputMap").value = item.mapUrl || "";
 
         const imgPreview = document.getElementById("imgPreview");
@@ -1055,44 +1057,48 @@
       function saveItem() {
         const id = document.getElementById("itemId").value;
         const fileInput = document.getElementById("inputImage");
-
-        let currentExpenses = [];
-        let docId = id ? id.toString() : Date.now().toString();
         let currentImage = "";
 
+        // 保留原本的明細 (expenses)，不被覆蓋
+        let currentExpenses = [];
         if (id) {
           const existingItem = itinerary.find((i) => i.id == id);
           if (existingItem) {
+            currentImage = existingItem.image;
             currentExpenses = existingItem.expenses || [];
-            currentImage = existingItem.image || "";
           }
         }
 
         const performSave = (base64Image) => {
-          const itemData = {
-            id: parseInt(docId),
+          const newItem = {
+            id: id ? parseInt(id) : Date.now(),
             date: currentDate,
             time: document.getElementById("inputTime").value,
             category: document.getElementById("inputCategory").value,
             title: document.getElementById("inputTitle").value,
             memo: document.getElementById("inputMemo").value,
+            expenses: currentExpenses, // 這裡很重要：保留明細
             mapUrl: document.getElementById("inputMap").value,
             image: base64Image,
-            expenses: currentExpenses,
           };
 
-          // 寫入 Firebase
-          tripCollection
-            .doc(docId)
-            .set(itemData, { merge: true })
-            .then(() => {
-              console.log("儲存成功");
-              closeModal();
-            })
-            .catch((error) => {
-              alert("儲存失敗！可能圖片太大 (免費版限制 1MB)");
-              console.error(error);
-            });
+          if (id) {
+            const idx = itinerary.findIndex((i) => i.id == id);
+            itinerary[idx] = newItem;
+          } else {
+            itinerary.push(newItem);
+          }
+
+          try {
+            localStorage.setItem(
+              "seoul2026_text_v1",
+              JSON.stringify(itinerary)
+            );
+            closeModal();
+            renderList();
+          } catch (e) {
+            alert("儲存失敗！圖片可能過大。");
+          }
         };
 
         if (fileInput.files && fileInput.files[0]) {
@@ -1110,22 +1116,23 @@
         const id = document.getElementById("itemId").value;
         if (!id) return closeModal();
         if (confirm("確定要刪除此行程嗎？")) {
-          tripCollection
-            .doc(id.toString())
-            .delete()
-            .then(() => closeModal())
-            .catch((error) => console.error("刪除失敗", error));
+          itinerary = itinerary.filter((i) => i.id != id);
+          localStorage.setItem("seoul2026_text_v1", JSON.stringify(itinerary));
+          closeModal();
+          renderList();
         }
       }
 
-      // ---------------------------------------------------------
-      // 7. 消費明細 Modal 邏輯
-      // ---------------------------------------------------------
+      renderTabs();
+      renderList();
+
+      // --- 記帳功能邏輯 (新增) ---
       let currentExpenseItemId = null;
 
       function openExpenseModal(id, event) {
-        if (event) event.stopPropagation();
+        if (event) event.stopPropagation(); // 防止同時打開行程編輯
         currentExpenseItemId = id;
+
         const item = itinerary.find((i) => i.id === id);
         if (!item) return;
 
@@ -1134,6 +1141,8 @@
         ).innerText = `行程：${item.title}`;
         renderExpenseList(item);
         document.getElementById("expenseModal").style.display = "flex";
+
+        // 清空輸入欄位
         document.getElementById("newExpenseName").value = "";
         document.getElementById("newExpenseAmount").value = "";
       }
@@ -1146,7 +1155,9 @@
       function renderExpenseList(item) {
         const list = document.getElementById("expenseList");
         list.innerHTML = "";
+
         let total = 0;
+        // 如果沒有 expenses 陣列就初始化一個
         if (!item.expenses) item.expenses = [];
 
         item.expenses.forEach((exp, index) => {
@@ -1161,7 +1172,7 @@
                 ).toLocaleString()}</span>
                 <button class="btn-remove-expense" onclick="removeExpense(${index})">×</button>
             </div>
-          `;
+        `;
           list.appendChild(div);
         });
         document.getElementById(
@@ -1173,58 +1184,39 @@
         if (!currentExpenseItemId) return;
         const name = document.getElementById("newExpenseName").value;
         const amount = document.getElementById("newExpenseAmount").value;
+
         if (!amount) return;
 
-        const item = itinerary.find((i) => i.id === currentExpenseItemId);
-        if (item) {
-          const newExpenses = item.expenses || [];
-          newExpenses.push({ name: name || "其他", amount: parseInt(amount) });
+        const idx = itinerary.findIndex((i) => i.id === currentExpenseItemId);
+        if (idx !== -1) {
+          if (!itinerary[idx].expenses) itinerary[idx].expenses = [];
 
-          tripCollection
-            .doc(item.id.toString())
-            .update({
-              expenses: newExpenses,
-            })
-            .then(() => {
-              renderExpenseList({ ...item, expenses: newExpenses });
-              document.getElementById("newExpenseName").value = "";
-              document.getElementById("newExpenseAmount").value = "";
-            });
+          itinerary[idx].expenses.push({
+            name: name || "其他",
+            amount: parseInt(amount),
+          });
+
+          // 儲存並更新畫面
+          localStorage.setItem("seoul2026_text_v1", JSON.stringify(itinerary));
+          renderExpenseList(itinerary[idx]);
+          renderList(); // 更新外層的總金額
+
+          // 清空金額欄位方便輸入下一筆
+          document.getElementById("newExpenseName").value = "";
+          document.getElementById("newExpenseAmount").value = "";
         }
       }
 
       function removeExpense(expenseIndex) {
         if (!currentExpenseItemId) return;
-        const item = itinerary.find((i) => i.id === currentExpenseItemId);
-        if (item) {
-          const newExpenses = [...item.expenses];
-          newExpenses.splice(expenseIndex, 1);
-
-          tripCollection
-            .doc(item.id.toString())
-            .update({
-              expenses: newExpenses,
-            })
-            .then(() => {
-              renderExpenseList({ ...item, expenses: newExpenses });
-            });
+        const idx = itinerary.findIndex((i) => i.id === currentExpenseItemId);
+        if (idx !== -1) {
+          itinerary[idx].expenses.splice(expenseIndex, 1);
+          localStorage.setItem("seoul2026_text_v1", JSON.stringify(itinerary));
+          renderExpenseList(itinerary[idx]);
+          renderList();
         }
       }
-
-      // ---------------------------------------------------------
-      // 8. 啟動
-      // ---------------------------------------------------------
-      initLocation();
-      setInterval(() => fetchWeather(currentLat, currentLon), 600000);
-      setInterval(updateTime, 1000);
-      updateTime();
-      renderTabs();
-
-      // 拖曳套件
-      new Sortable(document.getElementById("sortableList"), {
-        animation: 150,
-        handle: ".card",
-      });
     </script>
   </body>
 </html>

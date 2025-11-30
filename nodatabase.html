@@ -787,17 +787,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <script>
-      // ---------------------------------------------------------
-      // 1. Firebase 設定 (請把這裡換成你剛剛在 Firebase 網頁複製的內容)
-      // ---------------------------------------------------------
+      // --- Firebase 設定 (請填入你的設定) ---
       const firebaseConfig = {
-        apiKey: "AIzaSyDrZKuMRj9Cp5hzmmujEfgVR5C0HGskaBA",
-        authDomain: "seoul-travel-planning.firebaseapp.com",
-        projectId: "seoul-travel-planning",
-        storageBucket: "seoul-travel-planning.firebasestorage.app",
-        messagingSenderId: "4137993578",
-        appId: "1:4137993578:web:7032ec9e16d70058645113",
-        measurementId: "G-SW5PPNY2T3",
+        apiKey: "換成你的_apiKey",
+        authDomain: "換成你的_authDomain",
+        projectId: "換成你的_projectId",
+        storageBucket: "換成你的_storageBucket",
+        messagingSenderId: "換成你的_messagingSenderId",
+        appId: "換成你的_appId",
       };
 
       // 初始化 Firebase
@@ -805,9 +802,7 @@
       const db = firebase.firestore();
       const tripCollection = db.collection("seoul_itinerary_2026");
 
-      // ---------------------------------------------------------
-      // 2. 全域變數
-      // ---------------------------------------------------------
+      // --- 全域變數 ---
       let itinerary = [];
       let currentLat = 37.5665;
       let currentLon = 126.978;
@@ -823,31 +818,25 @@
         { d: "1/12", w: "Day 7" },
       ];
 
-      // ---------------------------------------------------------
-      // 3. 核心：監聽資料庫 (自動同步)
-      // ---------------------------------------------------------
+      // --- 核心：監聽資料庫 (取代原本的 LocalStorage 讀取) ---
       tripCollection.onSnapshot(
         (snapshot) => {
           itinerary = [];
           snapshot.forEach((doc) => {
+            // 把資料庫的內容存入變數
             itinerary.push(doc.data());
           });
 
-          // 資料庫一變動，畫面自動更新
+          // 資料一更新，馬上重畫畫面
           renderList();
           updateTotalAmount();
         },
         (error) => {
           console.error("資料庫連線失敗:", error);
-          alert(
-            "連線失敗！請檢查 config 是否填寫正確，並確認 Firestore 規則是否為 Test Mode"
-          );
         }
       );
 
-      // ---------------------------------------------------------
-      // 4. 基本功能 (GPS, Weather, Time)
-      // ---------------------------------------------------------
+      // --- 基本功能 (GPS, Weather, Time) ---
       function initLocation() {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
@@ -906,19 +895,17 @@
         })})`;
       }
 
-      // ---------------------------------------------------------
-      // 5. 畫面渲染邏輯
-      // ---------------------------------------------------------
+      // --- 畫面渲染 ---
       function renderTabs() {
         document.getElementById("dateTabs").innerHTML = dates
           .map(
             (d) => `
-            <div class="tab ${
-              d.d === currentDate ? "active" : ""
-            }" onclick="switchDate('${d.d}')">
-                <span>${d.w}</span><span>${d.d}</span>
-            </div>
-        `
+                <div class="tab ${
+                  d.d === currentDate ? "active" : ""
+                }" onclick="switchDate('${d.d}')">
+                    <span>${d.w}</span><span>${d.d}</span>
+                </div>
+            `
           )
           .join("");
       }
@@ -928,9 +915,7 @@
         list.innerHTML = "";
         const items = itinerary.filter((i) => i.date === currentDate);
 
-        // 排序 (選用)：如果要按時間排序，可以把下面這行註解打開
-        // items.sort((a, b) => a.time.localeCompare(b.time));
-
+        // 如果該日期沒行程
         if (items.length === 0)
           list.innerHTML = `<div style="text-align:center; padding:50px; color:#aaa; font-size:14px;">點擊右下角 + 新增行程</div>`;
 
@@ -949,6 +934,7 @@
             ? `<img src="${item.image}" class="card-image" style="display:block;">`
             : "";
 
+          // 地圖連結處理
           let mapLinkHtml = "";
           if (item.mapUrl) {
             let finalUrl = item.mapUrl;
@@ -962,24 +948,27 @@
           }
 
           el.innerHTML = `
-            <div class="card" onclick="editItem(${item.id})">
-                <div class="card-top-row">
-                    <span class="card-time">${item.time}</span>
-                    <span class="card-tag">${item.category || "交通"}</span>
-                    <span class="card-price-box" onclick="openExpenseModal(${
-                      item.id
-                    }, event)">${priceText}</span>
-                </div>
-                <div class="card-title">${item.title}</div>
-                ${imgHtml}
-                <div class="card-detail">${item.memo}</div>
-                ${mapLinkHtml}
-            </div>
-          `;
+                    <div class="card" onclick="editItem(${item.id})">
+                        <div class="card-top-row">
+                            <span class="card-time">${item.time}</span>
+                            <span class="card-tag">${
+                              item.category || "交通"
+                            }</span>
+                            <span class="card-price-box" onclick="openExpenseModal(${
+                              item.id
+                            }, event)">${priceText}</span>
+                        </div>
+                        <div class="card-title">${item.title}</div>
+                        ${imgHtml}
+                        <div class="card-detail">${item.memo}</div>
+                        ${mapLinkHtml}
+                    </div>
+                `;
           list.appendChild(el);
         });
       }
 
+      // 計算全天總金額
       function updateTotalAmount() {
         let grandTotal = 0;
         itinerary.forEach((i) => {
@@ -1000,6 +989,7 @@
         renderList();
       }
 
+      // --- 圖片預覽 ---
       function previewImage(input) {
         if (input.files && input.files[0]) {
           const reader = new FileReader();
@@ -1011,12 +1001,11 @@
         }
       }
 
-      // ---------------------------------------------------------
-      // 6. Modal 與 資料操作 (CRUD)
-      // ---------------------------------------------------------
+      // --- Modal (行程編輯) ---
       function openModal(isEdit = false) {
         document.getElementById("editModal").style.display = "flex";
         if (!isEdit) {
+          // 清空表單
           document.getElementById("itemId").value = "";
           document.getElementById("inputTime").value = "12:00";
           document.getElementById("inputCategory").value = "交通";
@@ -1042,7 +1031,6 @@
         document.getElementById("inputTitle").value = item.title;
         document.getElementById("inputMemo").value = item.memo;
         document.getElementById("inputMap").value = item.mapUrl || "";
-
         const imgPreview = document.getElementById("imgPreview");
         if (item.image) {
           imgPreview.src = item.image;
@@ -1052,13 +1040,15 @@
         }
       }
 
+      // --- Firebase 資料操作 (Save / Delete) ---
       function saveItem() {
         const id = document.getElementById("itemId").value;
         const fileInput = document.getElementById("inputImage");
 
+        // 如果是編輯，先撈出舊資料以保留 expenses
         let currentExpenses = [];
-        let docId = id ? id.toString() : Date.now().toString();
         let currentImage = "";
+        let docId = id ? id.toString() : Date.now().toString();
 
         if (id) {
           const existingItem = itinerary.find((i) => i.id == id);
@@ -1078,7 +1068,7 @@
             memo: document.getElementById("inputMemo").value,
             mapUrl: document.getElementById("inputMap").value,
             image: base64Image,
-            expenses: currentExpenses,
+            expenses: currentExpenses, // 重要：保留記帳資料
           };
 
           // 寫入 Firebase
@@ -1090,8 +1080,7 @@
               closeModal();
             })
             .catch((error) => {
-              alert("儲存失敗！可能圖片太大 (免費版限制 1MB)");
-              console.error(error);
+              alert("儲存失敗 (可能是圖片太大，請換小一點的圖片)");
             });
         };
 
@@ -1118,9 +1107,7 @@
         }
       }
 
-      // ---------------------------------------------------------
-      // 7. 消費明細 Modal 邏輯
-      // ---------------------------------------------------------
+      // --- Modal (消費明細) ---
       let currentExpenseItemId = null;
 
       function openExpenseModal(id, event) {
@@ -1154,14 +1141,14 @@
           const div = document.createElement("div");
           div.className = "expense-item";
           div.innerHTML = `
-            <div class="expense-name">${exp.name}</div>
-            <div style="display:flex; align-items:center;">
-                <span class="expense-amount">¥ ${parseInt(
-                  exp.amount
-                ).toLocaleString()}</span>
-                <button class="btn-remove-expense" onclick="removeExpense(${index})">×</button>
-            </div>
-          `;
+                    <div class="expense-name">${exp.name}</div>
+                    <div style="display:flex; align-items:center;">
+                        <span class="expense-amount">¥ ${parseInt(
+                          exp.amount
+                        ).toLocaleString()}</span>
+                        <button class="btn-remove-expense" onclick="removeExpense(${index})">×</button>
+                    </div>
+                `;
           list.appendChild(div);
         });
         document.getElementById(
@@ -1180,13 +1167,14 @@
           const newExpenses = item.expenses || [];
           newExpenses.push({ name: name || "其他", amount: parseInt(amount) });
 
+          // 更新 Firebase
           tripCollection
             .doc(item.id.toString())
             .update({
               expenses: newExpenses,
             })
             .then(() => {
-              renderExpenseList({ ...item, expenses: newExpenses });
+              renderExpenseList({ ...item, expenses: newExpenses }); // 只更新 Modal 內部
               document.getElementById("newExpenseName").value = "";
               document.getElementById("newExpenseAmount").value = "";
             });
@@ -1200,6 +1188,7 @@
           const newExpenses = [...item.expenses];
           newExpenses.splice(expenseIndex, 1);
 
+          // 更新 Firebase
           tripCollection
             .doc(item.id.toString())
             .update({
@@ -1211,16 +1200,14 @@
         }
       }
 
-      // ---------------------------------------------------------
-      // 8. 啟動
-      // ---------------------------------------------------------
+      // --- 啟動 ---
       initLocation();
       setInterval(() => fetchWeather(currentLat, currentLon), 600000);
       setInterval(updateTime, 1000);
       updateTime();
       renderTabs();
 
-      // 拖曳套件
+      // 拖曳初始化
       new Sortable(document.getElementById("sortableList"), {
         animation: 150,
         handle: ".card",
