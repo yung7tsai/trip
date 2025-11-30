@@ -447,17 +447,35 @@
         font-weight: 600;
       }
 
+      /* 修改這一段 CSS */
       .modal-input,
-      .modal-select,
-      .modal-textarea {
+      .modal-select {
         width: 100%;
-        padding: 8px 4px; /* 縮小輸入框高度 */
+        height: 42px; /* 關鍵：強制設定高度，解決對齊問題 */
+        line-height: 42px; /* 讓文字垂直置中 */
+        padding: 0 8px; /* 只要左右內距，上下交給 height 控制 */
         border: 1px solid #e0e0e0;
         font-family: var(--font-main);
         border-radius: 6px;
         background: #fafcfd;
         font-size: 14px;
+        appearance: none; /* 移除手機預設的立體樣式 */
+        -webkit-appearance: none; /* 針對 iOS Safari */
       }
+
+      /* 備註欄另外設定 (因為它需要比較高) */
+      .modal-textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #e0e0e0;
+        font-family: var(--font-main);
+        border-radius: 6px;
+        background: #fafcfd;
+        font-size: 14px;
+        resize: vertical;
+        min-height: 60px;
+      }
+
       .modal-textarea {
         resize: vertical;
         min-height: 50px; /* 縮小備註欄高度 */
