@@ -965,7 +965,18 @@
         const items = itinerary.filter((i) => i.date === currentDate);
 
         // 排序 (選用)：如果要按時間排序，可以把下面這行註解打開
-        // items.sort((a, b) => a.time.localeCompare(b.time));
+        // --- 修改這裡：排序邏輯 (優先權：自訂順序 > 時間) ---
+        items.sort((a, b) => {
+          const indexA = a.sortIndex !== undefined ? a.sortIndex : 9999;
+          const indexB = b.sortIndex !== undefined ? b.sortIndex : 9999;
+
+          // 如果兩者都有自訂順序且不同，照順序排
+          if (indexA !== indexB) {
+            return indexA - indexB;
+          }
+          // 否則照時間排
+          return a.time.localeCompare(b.time);
+        });
 
         if (items.length === 0)
           list.innerHTML = `<div style="text-align:center; padding:50px; color:#aaa; font-size:14px;">點擊右下角 + 新增行程</div>`;
@@ -1256,10 +1267,37 @@
       updateTime();
       renderTabs();
 
-      // 拖曳套件
+      // 拖曳套件設定 (加入 onEnd 儲存功能)
       new Sortable(document.getElementById("sortableList"), {
         animation: 150,
         handle: ".card",
+        onEnd: function (evt) {
+          // 1. 取得拖曳後的新順序
+          const itemEls = document.querySelectorAll(".timeline-item");
+
+          // 2. 批次更新資料庫
+          const batch = db.batch(); // 使用 Batch 寫入效能較好
+
+          itemEls.forEach((el, index) => {
+            const id = el.dataset.id;
+            const docRef = tripCollection.doc(id.toString());
+
+            // 更新本地資料 (讓畫面暫時正確)
+            const item = itinerary.find((i) => i.id == id);
+            if (item) item.sortIndex = index;
+
+            // 準備寫入資料庫
+            batch.update(docRef, { sortIndex: index });
+          });
+
+          // 3. 送出更新
+          batch
+            .commit()
+            .then(() => {
+              console.log("順序已更新");
+            })
+            .catch((err) => console.error("排序儲存失敗", err));
+        },
       });
     </script>
   </body>
