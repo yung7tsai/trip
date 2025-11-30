@@ -18,6 +18,9 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
     <style>
       :root {
         --bg-paper: #f8fafb;
@@ -1036,16 +1039,33 @@
             ? `<img src="${item.image}" class="card-image" style="display:block;">`
             : "";
 
+          // --- 地圖連結邏輯 (Naver Map + 繁轉簡) ---
           let mapLinkHtml = "";
           if (item.mapUrl) {
             let finalUrl = item.mapUrl;
-            if (!finalUrl.startsWith("http"))
-              finalUrl = `http://googleusercontent.com/maps.google.com/search?q=${encodeURIComponent(
-                item.mapUrl
+
+            // 判斷：如果不是網址 (代表是地名)
+            if (!finalUrl.startsWith("http")) {
+              // 1. 進行繁簡轉換 (例：明洞 -> 明洞 (沒變), 鰻魚飯 -> 鳗鱼饭)
+              const simplifiedText = converter(item.mapUrl);
+
+              // 2. 組合 Naver Map 搜尋連結
+              finalUrl = `https://map.naver.com/p/search/${encodeURIComponent(
+                simplifiedText
               )}`;
-            mapLinkHtml = `<div class="card-map-row"><a href="${finalUrl}" target="_blank" class="map-link" onclick="event.stopPropagation()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>搜尋地圖：${
-              item.mapUrl.length > 10 ? "查看位置" : item.mapUrl
-            }</a></div>`;
+            }
+
+            mapLinkHtml = `
+                <div class="card-map-row">
+                    <a href="${finalUrl}" target="_blank" class="map-link" onclick="event.stopPropagation()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        點擊查看位置
+                    </a>
+                </div>
+            `;
           }
 
           el.innerHTML = `
