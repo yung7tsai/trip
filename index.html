@@ -1007,6 +1007,8 @@
         list.innerHTML = "";
         const items = itinerary.filter((i) => i.date === currentDate);
 
+        const converter = OpenCC.Converter({ from: "tw", to: "cn" });
+
         // 排序 (選用)：如果要按時間排序，可以把下面這行註解打開
         // --- 修改這裡：排序邏輯 (優先權：自訂順序 > 時間) ---
         items.sort((a, b) => {
